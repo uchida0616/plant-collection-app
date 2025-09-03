@@ -2,9 +2,20 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'screens/add_plant_page.dart';
+import 'database/plant_database.dart';
+import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
+import 'package:sqflite/sqflite.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 
-void main() => runApp(const PlantApp());
+void main() {
+  // Webの場合だけ databaseFactory を差し替える
+  if (kIsWeb) {
+    databaseFactory = databaseFactoryFfiWeb;
+  }
+
+  runApp(const PlantApp());
+}
 
 class PlantApp extends StatelessWidget {
   const PlantApp({super.key});
@@ -35,9 +46,9 @@ class _PlantListPageState extends State<PlantListPage> {
   }
 
   Future<void> loadPlants() async {
-    final jsonStr = await rootBundle.loadString('assets/plants.json');
+    final data = await PlantDatabase.getPlants();
     setState(() {
-      plants = json.decode(jsonStr);
+      plants = data;
     });
   }
 
@@ -63,18 +74,23 @@ class _PlantListPageState extends State<PlantListPage> {
           );
         },
       ),
-      floatingActionButton: FloatingActionButton(   // 👈 ここを追加！
+      floatingActionButton: FloatingActionButton(
         onPressed: () async {
           final newPlant = await Navigator.push(
             context,
             MaterialPageRoute(builder: (_) => const AddPlantPage()),
           );
 
-          if (newPlant != null) {
-            setState(() {
-              plants.add(newPlant); // とりあえずリストに追加
-            });
-          }
+        if (newPlant != null) {
+              setState(() {
+                plants.add(newPlant); // アプリ起動中だけ保持
+              });
+            }
+        // 実機確認時に以下に変更する
+        // if (newPlant != null) {
+        //   await PlantDatabase.insertPlant(newPlant); // DBに保存
+        //   loadPlants(); // 保存後に一覧を再読み込み
+        // }
         },
         child: const Icon(Icons.add),
       ),
