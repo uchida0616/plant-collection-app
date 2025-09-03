@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
+import 'screens/add_plant_page.dart';
+
 
 void main() => runApp(const PlantApp());
 
@@ -60,6 +62,21 @@ class _PlantListPageState extends State<PlantListPage> {
             },
           );
         },
+      ),
+      floatingActionButton: FloatingActionButton(   // 👈 ここを追加！
+        onPressed: () async {
+          final newPlant = await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const AddPlantPage()),
+          );
+
+          if (newPlant != null) {
+            setState(() {
+              plants.add(newPlant); // とりあえずリストに追加
+            });
+          }
+        },
+        child: const Icon(Icons.add),
       ),
     );
   }
